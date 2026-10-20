@@ -7,15 +7,18 @@ export interface AppConfig {
   isConfigured: boolean;
 }
 
+const DEFAULT_SUPABASE_URL = 'https://itwxqzxpzwoqnbrvtips.supabase.co';
+const DEFAULT_SUPABASE_KEY = 'sb_publishable_iTk1NeAlpesdv5Uiiuc_7Q_GKZ7XHWS';
+
 /**
  * Read and validate environment variables at startup
  */
 export function getAppConfig(): AppConfig {
-  const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+  const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL).trim();
   const supabasePublishableKey = (
     import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
     import.meta.env.VITE_SUPABASE_ANON_KEY ||
-    ''
+    DEFAULT_SUPABASE_KEY
   ).trim();
 
   let publicAppUrl = (import.meta.env.VITE_PUBLIC_APP_URL || '').trim();

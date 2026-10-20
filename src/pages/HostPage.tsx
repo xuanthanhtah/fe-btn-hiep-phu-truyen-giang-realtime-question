@@ -80,10 +80,7 @@ export const HostPage: React.FC = () => {
 
       if (event.type === 'room:sync_request') {
         if (event.roomId !== currentHost.roomId) return;
-        if (syncDebounceRef.current) clearTimeout(syncDebounceRef.current);
-        syncDebounceRef.current = window.setTimeout(() => {
-          broadcastCurrentState();
-        }, 120);
+        broadcastCurrentState();
         return;
       }
 
@@ -127,18 +124,28 @@ export const HostPage: React.FC = () => {
       onEvent: (event) => handleHostIncomingEvent(event),
       onStatusChange: (status) => {
         setConnectionStatus(status);
+        if (status === 'connected') {
+          broadcastCurrentState();
+        }
       },
     });
 
     channelSubRef.current = sub;
     setTransportType(sub.getTransportType());
 
+    // Initial broadcast
     const timer = setTimeout(() => {
       broadcastCurrentState();
-    }, 300);
+    }, 200);
+
+    // Periodic heartbeat every 4 seconds to sync any newly connected participants/presenters
+    const heartbeatTimer = setInterval(() => {
+      broadcastCurrentState();
+    }, 4000);
 
     return () => {
       clearTimeout(timer);
+      clearInterval(heartbeatTimer);
       if (syncDebounceRef.current) clearTimeout(syncDebounceRef.current);
       sub.unsubscribe();
       channelSubRef.current = null;

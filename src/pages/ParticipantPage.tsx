@@ -138,7 +138,7 @@ export const ParticipantPage: React.FC = () => {
         setConnectionStatus(status);
         if (status === 'connected') {
           const syncEvt = createRoomSyncRequestEvent(roomId, useParticipantStore.getState().participantId);
-          channelSubRef.current?.broadcast(syncEvt);
+          sub.broadcast(syncEvt);
         }
       },
     });
@@ -146,14 +146,20 @@ export const ParticipantPage: React.FC = () => {
     channelSubRef.current = sub;
     setTransportType(sub.getTransportType());
 
-    // Send initial sync request
-    const timer = setTimeout(() => {
-      const syncEvt = createRoomSyncRequestEvent(roomId, useParticipantStore.getState().participantId);
-      sub.broadcast(syncEvt);
-    }, 300);
+    // Send immediate sync request
+    const syncEvt = createRoomSyncRequestEvent(roomId, useParticipantStore.getState().participantId);
+    sub.broadcast(syncEvt);
+
+    // Keep requesting sync every 1.5 seconds if currentQuestion is still null
+    const syncInterval = setInterval(() => {
+      const state = useParticipantStore.getState();
+      if (!state.currentQuestion && channelSubRef.current) {
+        channelSubRef.current.broadcast(createRoomSyncRequestEvent(roomId, state.participantId));
+      }
+    }, 1500);
 
     return () => {
-      clearTimeout(timer);
+      clearInterval(syncInterval);
       sub.unsubscribe();
       channelSubRef.current = null;
     };
@@ -228,9 +234,21 @@ export const ParticipantPage: React.FC = () => {
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <Radio className="w-10 h-10 text-indigo-400 mb-3 animate-pulse" />
             <h2 className="text-xl font-bold text-white mb-1">Đã kết nối vào phòng</h2>
-            <p className="text-xs text-slate-400 max-w-xs">
+            <p className="text-xs text-slate-400 max-w-xs mb-4">
               Đang chờ người điều phối chuyển sang câu hỏi tiếp theo...
             </p>
+            <button
+              onClick={() => {
+                if (channelSubRef.current && roomId) {
+                  const state = useParticipantStore.getState();
+                  channelSubRef.current.broadcast(createRoomSyncRequestEvent(roomId, state.participantId));
+                }
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              <span>Đang kết nối & đồng bộ câu hỏi...</span>
+            </button>
           </div>
         ) : !currentQuestion.options || currentQuestion.options.length === 0 ? (
           /* Question with NO options: centered in the middle of the screen, box increased 2.5x width */

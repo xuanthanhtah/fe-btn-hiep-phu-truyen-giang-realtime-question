@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { usePresenterStore } from '../stores/presenter.store';
 import { useConnectionStore } from '../stores/connection.store';
 import { subscribeToRoomChannel, type RoomChannelSubscription } from '../realtime/room.channel';
-import { createRoomSyncRequestEvent } from '../realtime/room.events';
+import { createRoomSyncRequestEvent, createRoomStateEvent } from '../realtime/room.events';
 import { PollResultsView } from '../components/PollResultsView';
 import { RoomQrCard } from '../components/RoomQrCard';
 import {
@@ -119,6 +119,21 @@ export const PresenterPage: React.FC = () => {
           applyRoomReset({
             revision: event.payload.revision,
           });
+        } else if (event.type === 'room:sync_request') {
+          const pres = usePresenterStore.getState();
+          if (pres.currentQuestion && subRef.current) {
+            const stateEvt = createRoomStateEvent(roomId, {
+              roomId,
+              revision: pres.revision,
+              currentQuestionIndex: pres.currentQuestionIndex,
+              totalQuestions: pres.totalQuestions,
+              currentQuestion: pres.currentQuestion,
+              pollStatus: pres.pollStatus,
+              voteCounts: pres.voteCounts,
+              totalAcceptedVotes: pres.totalAcceptedVotes,
+            });
+            subRef.current.broadcast(stateEvt);
+          }
         }
       },
       onStatusChange: (status) => {
@@ -137,10 +152,20 @@ export const PresenterPage: React.FC = () => {
     const syncTimer = setTimeout(() => {
       const syncEvt = createRoomSyncRequestEvent(roomId);
       sub.broadcast(syncEvt);
-    }, 400);
+    }, 200);
+
+    // Keep polling until we get the active question
+    const syncInterval = setInterval(() => {
+      const state = usePresenterStore.getState();
+      if (!state.currentQuestion && subRef.current) {
+        const syncEvt = createRoomSyncRequestEvent(roomId);
+        subRef.current.broadcast(syncEvt);
+      }
+    }, 2000);
 
     return () => {
       clearTimeout(syncTimer);
+      clearInterval(syncInterval);
       sub.unsubscribe();
       subRef.current = null;
     };
