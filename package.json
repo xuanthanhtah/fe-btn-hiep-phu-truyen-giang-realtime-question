@@ -12,6 +12,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@supabase/supabase-js": "^2.49.1",
     "lucide-react": "^1.16.0",
     "qrcode.react": "^4.2.0",
@@ -23,6 +26,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.9",
+    "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@types/node": "^24.19.2",

@@ -1,7 +1,8 @@
 import React from 'react';
 import type { OptionId, PollQuestion, PollStatus, VoteCounts } from '../types/poll';
 import { calculateVotePercentages } from '../realtime/room.reducer';
-import { Users, Lock, Unlock, Clock } from 'lucide-react';
+import { useSettingsStore } from '../stores/settings.store';
+import { Users, Lock, Unlock, Clock, ArrowUp, ArrowDown, MoveVertical } from 'lucide-react';
 
 interface PollResultsViewProps {
   question: PollQuestion | null;
@@ -9,6 +10,8 @@ interface PollResultsViewProps {
   voteCounts: VoteCounts;
   totalAcceptedVotes: number;
   mode?: 'stage' | 'host';
+  onMoveOption?: (fromIndex: number, toIndex: number) => void;
+  onOpenReorderModal?: () => void;
 }
 
 const OPTION_THEMES: Record<
@@ -62,7 +65,11 @@ export const PollResultsView: React.FC<PollResultsViewProps> = ({
   voteCounts,
   totalAcceptedVotes,
   mode = 'stage',
+  onMoveOption,
+  onOpenReorderModal,
 }) => {
+  const { answerFontSize, hostAnswerFontSize, answerLayout } = useSettingsStore();
+
   if (!question || !question.options || question.options.length === 0) {
     return null;
   }
@@ -70,11 +77,24 @@ export const PollResultsView: React.FC<PollResultsViewProps> = ({
   const percentages = calculateVotePercentages(voteCounts);
   const totalVotes = totalAcceptedVotes;
   const isStage = mode === 'stage';
+  const effectiveAnswerFontSize = isStage ? answerFontSize : hostAnswerFontSize;
+
+  // Determine grid layout based on settings
+  let layoutClass = 'grid-cols-1';
+  if (answerLayout === 'grid-2') {
+    layoutClass = 'grid-cols-1 md:grid-cols-2';
+  } else if (answerLayout === 'grid-4') {
+    layoutClass = isStage
+      ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+      : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4';
+  } else {
+    layoutClass = 'grid-cols-1';
+  }
 
   return (
-    <div className="w-full flex flex-col gap-6">
-      {/* Header Info: Poll Status and Total Accepted Votes */}
-      <div className="flex items-center justify-between px-1">
+    <div className="w-full flex flex-col gap-5">
+      {/* Header Info: Poll Status, Reorder shortcut, and Total Accepted Votes */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-1">
         <div className="flex items-center gap-2">
           {pollStatus === 'open' && (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse">
@@ -91,6 +111,17 @@ export const PollResultsView: React.FC<PollResultsViewProps> = ({
               <Clock className="w-3.5 h-3.5" /> Chưa mở bình chọn
             </span>
           )}
+
+          {!isStage && onOpenReorderModal && (
+            <button
+              onClick={onOpenReorderModal}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition cursor-pointer"
+              title="Mở bảng điều chỉnh vị trí đáp án"
+            >
+              <MoveVertical className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Đổi vị trí đáp án</span>
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-800 px-3.5 py-1.5 rounded-full text-slate-300 text-xs font-medium">
@@ -101,9 +132,9 @@ export const PollResultsView: React.FC<PollResultsViewProps> = ({
         </div>
       </div>
 
-      {/* 4 Options Horizontal Result Bars */}
-      <div className={`grid gap-4 ${isStage ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-        {question.options.map((option) => {
+      {/* Options Result Cards */}
+      <div className={`grid gap-4 ${layoutClass}`}>
+        {question.options.map((option, optIdx) => {
           const theme = OPTION_THEMES[option.id];
           const count = voteCounts[option.id] || 0;
           const percentage = percentages[option.id] || 0;
@@ -123,8 +154,8 @@ export const PollResultsView: React.FC<PollResultsViewProps> = ({
 
               {/* Foreground Content */}
               <div className="relative z-10 flex flex-col justify-between h-full">
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <div className="flex items-start gap-3.5 sm:gap-4 flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
                     <span
                       className={`inline-flex items-center justify-center font-black shadow-md shrink-0 ${
                         isStage
@@ -135,17 +166,19 @@ export const PollResultsView: React.FC<PollResultsViewProps> = ({
                       {option.id}
                     </span>
                     <span
-                      className={`text-white tracking-wide leading-snug break-words ${
-                        isStage
-                          ? 'text-xl sm:text-2xl lg:text-3xl font-bold'
-                          : 'text-sm sm:text-base font-semibold'
+                      style={{
+                        fontSize: `${effectiveAnswerFontSize}px`,
+                        lineHeight: 1.35,
+                      }}
+                      className={`text-white tracking-wide break-words ${
+                        isStage ? 'font-bold' : 'font-semibold'
                       }`}
                     >
                       {option.text}
                     </span>
                   </div>
 
-                  {/* Percentage and Vote Count */}
+                  {/* Percentage, Vote Count, and Host Quick Reorder Controls */}
                   <div className="text-right flex flex-col items-end shrink-0 pl-2">
                     <span
                       className={`font-black font-mono tracking-tight ${theme.textAccent} ${
@@ -157,6 +190,30 @@ export const PollResultsView: React.FC<PollResultsViewProps> = ({
                     <span className={`font-mono text-slate-400 ${isStage ? 'text-xs sm:text-sm font-semibold' : 'text-xs'}`}>
                       {count} phiếu
                     </span>
+
+                    {/* Inline Host Move Controls */}
+                    {!isStage && onMoveOption && (
+                      <div className="flex items-center gap-1 mt-2">
+                        <button
+                          type="button"
+                          disabled={optIdx === 0}
+                          onClick={() => onMoveOption(optIdx, optIdx - 1)}
+                          className="p-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 disabled:opacity-20 disabled:pointer-events-none text-slate-300 transition border border-slate-700 cursor-pointer"
+                          title="Đổi chỗ lên trên"
+                        >
+                          <ArrowUp className="w-3 h-3" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={optIdx === question.options.length - 1}
+                          onClick={() => onMoveOption(optIdx, optIdx + 1)}
+                          className="p-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 disabled:opacity-20 disabled:pointer-events-none text-slate-300 transition border border-slate-700 cursor-pointer"
+                          title="Đổi chỗ xuống dưới"
+                        >
+                          <ArrowDown className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 

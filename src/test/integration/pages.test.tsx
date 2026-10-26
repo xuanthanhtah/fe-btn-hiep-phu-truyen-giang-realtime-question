@@ -220,4 +220,47 @@ describe('Page Rendering & User Flow Tests', () => {
 
     unmount();
   });
+
+  it('renders HostPage with QR badge in action buttons, and can open Settings and Reorder modals', () => {
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/host/ROOM99']}>
+        <Routes>
+          <Route path="/host/:roomId" element={<HostPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    // Verify QR badge is inside the action area
+    expect(screen.getByText(/Sân khấu đang hiện mã QR/i)).toBeInTheDocument();
+
+    // Verify Settings button is present and opens Settings modal
+    const settingBtns = screen.getAllByRole('button', { name: /Cài đặt/i });
+    expect(settingBtns.length).toBeGreaterThan(0);
+    fireEvent.click(settingBtns[0]);
+    expect(screen.getByText(/Cài đặt Font chữ & Bố cục hiển thị/i)).toBeInTheDocument();
+
+    // Close Settings modal
+    fireEvent.click(screen.getByRole('button', { name: /Hoàn tất/i }));
+    expect(screen.queryByText(/Cài đặt Font chữ & Bố cục hiển thị/i)).not.toBeInTheDocument();
+
+    // Start session to enable Vị trí đáp án button
+    const startBtn = screen.getByRole('button', { name: /Bắt đầu/i });
+    fireEvent.click(startBtn);
+
+    // Verify Vị trí đáp án button exists and opens Reorder modal
+    const reorderBtns = screen.getAllByRole('button', { name: /Vị trí đáp án/i });
+    expect(reorderBtns.length).toBeGreaterThan(0);
+    fireEvent.click(reorderBtns[0]);
+    expect(screen.getByText(/Điều chỉnh vị trí đáp án/i)).toBeInTheDocument();
+
+    // Verify 4 drag handles are present for drag & drop
+    const dragHandles = screen.getAllByTitle(/Kéo thả để đổi vị trí/i);
+    expect(dragHandles.length).toBe(4);
+
+    // Close Reorder modal
+    fireEvent.click(screen.getByRole('button', { name: /Xong/i }));
+    expect(screen.queryByText(/Điều chỉnh vị trí đáp án/i)).not.toBeInTheDocument();
+
+    unmount();
+  });
 });

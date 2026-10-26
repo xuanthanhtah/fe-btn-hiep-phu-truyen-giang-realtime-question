@@ -17,6 +17,10 @@ import { RoomQrCard } from '../components/RoomQrCard';
 import { PollResultsView } from '../components/PollResultsView';
 import { QuestionEditor } from '../components/QuestionEditor';
 import { ResetModal } from '../components/ResetModal';
+import { SettingsModal } from '../components/SettingsModal';
+import { ReorderOptionsModal } from '../components/ReorderOptionsModal';
+import { useSettingsStore } from '../stores/settings.store';
+import type { OptionId, PollQuestion } from '../types/poll';
 import {
   Play,
   Square,
@@ -29,6 +33,8 @@ import {
   AlertTriangle,
   Zap,
   QrCode,
+  Settings,
+  MoveVertical,
 } from 'lucide-react';
 
 export const HostPage: React.FC = () => {
@@ -66,6 +72,10 @@ export const HostPage: React.FC = () => {
   // Local UI state
   const [showQuestionEditor, setShowQuestionEditor] = useState(false);
   const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+  const [reorderModalOpen, setReorderModalOpen] = useState(false);
+
+  const hostQuestionFontSize = useSettingsStore((s) => s.hostQuestionFontSize);
 
   // Broadcast current room snapshot helper
   const broadcastCurrentState = useCallback(async () => {
@@ -230,6 +240,27 @@ export const HostPage: React.FC = () => {
     }
   };
 
+  const handleUpdateActiveQuestion = (updatedQ: PollQuestion) => {
+    updateQuestion(currentQuestionIndex, updatedQ);
+    broadcastCurrentState();
+  };
+
+  const handleMoveActiveOption = (fromIndex: number, toIndex: number) => {
+    const currentQ = questions[currentQuestionIndex];
+    if (!currentQ || !currentQ.options) return;
+    const options = currentQ.options;
+    if (fromIndex < 0 || fromIndex >= options.length || toIndex < 0 || toIndex >= options.length) return;
+    const optionIds: OptionId[] = ['A', 'B', 'C', 'D'];
+    const cloned = [...options];
+    const [moved] = cloned.splice(fromIndex, 1);
+    cloned.splice(toIndex, 0, moved);
+    const updatedOptions = cloned.map((opt, idx) => ({
+      id: optionIds[idx] || opt.id,
+      text: opt.text,
+    }));
+    handleUpdateActiveQuestion({ ...currentQ, options: updatedOptions });
+  };
+
   const activeQuestion = questions[currentQuestionIndex] ?? null;
   const snapshot = useHostStore.getState().getPublicSnapshot();
   const isControlsDisabled = connectionStatus === 'disconnected' || connectionStatus === 'unavailable';
@@ -257,6 +288,15 @@ export const HostPage: React.FC = () => {
         <div className="flex items-center gap-3">
           <ConnectionBadge showDetails={false} />
 
+          <button
+            onClick={() => setSettingsModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 text-xs font-semibold transition cursor-pointer"
+            title="Cài đặt cỡ chữ và bố cục"
+          >
+            <Settings className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="hidden sm:inline">Cài đặt</span>
+          </button>
+
           <a
             href={`/present/${hostRoomId}`}
             target="_blank"
@@ -280,36 +320,6 @@ export const HostPage: React.FC = () => {
           </div>
         )}
 
-        {/* Banner when in QR Lobby mode */}
-        {!isStarted && (
-          <div className="bg-gradient-to-r from-indigo-950/70 via-slate-900/90 to-slate-900/70 border border-indigo-500/40 rounded-3xl p-5 sm:p-6 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4 text-center sm:text-left">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
-                <QrCode className="w-6 h-6 animate-pulse" />
-              </div>
-              <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold mb-1">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                  <span>Sân khấu đang hiện mã QR</span>
-                </div>
-                <h2 className="text-base sm:text-lg font-bold text-white">Chờ khán giả quét mã tham gia</h2>
-                <p className="text-xs text-slate-400">
-                  Màn hình Presenter Stage đang hiển thị mã QR lớn. Bấm <b>"Bắt đầu"</b> khi muốn hiển thị câu hỏi.
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={handleStartSession}
-              disabled={isControlsDisabled}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-black text-base transition shadow-xl shadow-emerald-600/30 cursor-pointer shrink-0"
-            >
-              <Play className="w-5 h-5 fill-current" />
-              <span>Bắt đầu</span>
-            </button>
-          </div>
-        )}
-
         {/* Live Question Action Bar */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col gap-5">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -324,7 +334,10 @@ export const HostPage: React.FC = () => {
                   </span>
                 )}
               </div>
-              <h1 className="text-xl sm:text-2xl font-black text-white leading-snug">
+              <h1
+                style={{ fontSize: `${hostQuestionFontSize}px` }}
+                className="font-black text-white leading-snug"
+              >
                 {activeQuestion?.title || 'Chưa chọn câu hỏi'}
               </h1>
             </div>
@@ -356,14 +369,21 @@ export const HostPage: React.FC = () => {
           {/* Core Actions: Open/Close Poll, Reset, Toggle Deck Editor */}
           <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-slate-800/80">
             {!isStarted ? (
-              <button
-                disabled={isControlsDisabled}
-                onClick={handleStartSession}
-                className="flex-1 min-h-[46px] flex items-center justify-center gap-2 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-bold text-sm transition shadow-lg shadow-emerald-600/30 cursor-pointer active:scale-[0.99]"
-              >
-                <Play className="w-4 h-4 fill-current" />
-                <span>Bắt đầu</span>
-              </button>
+              <div className="flex-1 flex flex-wrap items-center gap-2.5">
+                <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold shrink-0">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+                  <QrCode className="w-4 h-4 text-amber-400" />
+                  <span>Sân khấu đang hiện mã QR</span>
+                </div>
+                <button
+                  disabled={isControlsDisabled}
+                  onClick={handleStartSession}
+                  className="flex-1 min-h-[46px] flex items-center justify-center gap-2 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-black text-sm transition shadow-lg shadow-emerald-600/30 cursor-pointer active:scale-[0.99]"
+                >
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>Bắt đầu</span>
+                </button>
+              </div>
             ) : (!activeQuestion?.options || activeQuestion.options.length === 0) ? (
               <div className="flex-1 min-h-[46px] flex items-center justify-center px-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-slate-400 text-xs font-semibold">
                 Câu hỏi mở • Không cần mở bình chọn (Hiển thị chính giữa màn hình)
@@ -401,15 +421,27 @@ export const HostPage: React.FC = () => {
             )}
 
             {activeQuestion?.options && activeQuestion.options.length > 0 && (
-              <button
-                disabled={isControlsDisabled}
-                onClick={() => setResetModalOpen(true)}
-                className="flex items-center gap-1.5 px-4 min-h-[46px] rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700 transition cursor-pointer"
-                title="Xóa lượt bình chọn của câu hiện tại"
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span>Reset câu này</span>
-              </button>
+              <>
+                <button
+                  disabled={isControlsDisabled}
+                  onClick={() => setReorderModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3.5 min-h-[46px] rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700 transition cursor-pointer"
+                  title="Điều chỉnh thứ tự hiển thị của các đáp án A, B, C, D"
+                >
+                  <MoveVertical className="w-4 h-4 text-indigo-400" />
+                  <span>Vị trí đáp án</span>
+                </button>
+
+                <button
+                  disabled={isControlsDisabled}
+                  onClick={() => setResetModalOpen(true)}
+                  className="flex items-center gap-1.5 px-4 min-h-[46px] rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700 transition cursor-pointer"
+                  title="Xóa lượt bình chọn của câu hiện tại"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Reset câu này</span>
+                </button>
+              </>
             )}
 
             <button
@@ -422,6 +454,15 @@ export const HostPage: React.FC = () => {
             >
               <Sliders className="w-4 h-4" />
               <span>{showQuestionEditor ? 'Đóng quản lý' : `Danh sách câu hỏi (${questions.length})`}</span>
+            </button>
+
+            <button
+              onClick={() => setSettingsModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 min-h-[46px] rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700 transition cursor-pointer"
+              title="Cài đặt cỡ chữ và bố cục hiển thị"
+            >
+              <Settings className="w-4 h-4 text-indigo-400" />
+              <span>Cài đặt</span>
             </button>
           </div>
         </div>
@@ -466,6 +507,8 @@ export const HostPage: React.FC = () => {
                 voteCounts={snapshot.voteCounts}
                 totalAcceptedVotes={snapshot.totalAcceptedVotes}
                 mode="host"
+                onMoveOption={(from, to) => handleMoveActiveOption(from, to)}
+                onOpenReorderModal={() => setReorderModalOpen(true)}
               />
             )}
           </div>
@@ -489,6 +532,21 @@ export const HostPage: React.FC = () => {
         confirmLabel="Xác nhận xóa phiếu"
         onConfirm={handleResetPollConfirm}
         onCancel={() => setResetModalOpen(false)}
+      />
+
+      {/* Display & Font Settings Modal */}
+      <SettingsModal
+        isOpen={settingsModalOpen}
+        onClose={() => setSettingsModalOpen(false)}
+        targetMode="host"
+      />
+
+      {/* Reorder Options Modal */}
+      <ReorderOptionsModal
+        isOpen={reorderModalOpen}
+        onClose={() => setReorderModalOpen(false)}
+        question={activeQuestion}
+        onUpdateQuestion={handleUpdateActiveQuestion}
       />
     </div>
   );

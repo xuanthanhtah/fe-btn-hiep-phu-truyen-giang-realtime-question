@@ -8,11 +8,14 @@ import { PollResultsView } from '../components/PollResultsView';
 import { RoomQrCard } from '../components/RoomQrCard';
 import { QRCodeSVG } from 'qrcode.react';
 import { getAppConfig } from '../realtime/supabase.client';
+import { useSettingsStore } from '../stores/settings.store';
+import { SettingsModal } from '../components/SettingsModal';
 import {
   Maximize,
   Minimize,
   ArrowLeft,
   Radio,
+  Sliders,
 } from 'lucide-react';
 
 export const PresenterPage: React.FC = () => {
@@ -36,10 +39,13 @@ export const PresenterPage: React.FC = () => {
   const applyQuestionChanged = usePresenterStore((s) => s.applyQuestionChanged);
   const applyRoomReset = usePresenterStore((s) => s.applyRoomReset);
 
+  const questionFontSize = useSettingsStore((s) => s.questionFontSize);
+
   const setConnectionStatus = useConnectionStore((s) => s.setStatus);
   const setTransportType = useConnectionStore((s) => s.setTransportType);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const subRef = useRef<RoomChannelSubscription | null>(null);
 
@@ -63,6 +69,8 @@ export const PresenterPage: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'f' || e.key === 'F') {
         toggleFullscreen();
+      } else if (e.key === 's' || e.key === 'S') {
+        setSettingsModalOpen((prev) => !prev);
       }
     };
 
@@ -196,9 +204,17 @@ export const PresenterPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Right side: Compact QR & Fullscreen */}
+        {/* Right side: Compact QR, Settings & Fullscreen */}
         <div className="flex items-center gap-3">
           <RoomQrCard roomId={roomId || ''} compact={true} />
+
+          <button
+            onClick={() => setSettingsModalOpen(true)}
+            className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition cursor-pointer"
+            title="Cài đặt font chữ & bố cục (S)"
+          >
+            <Sliders className="w-4 h-4" />
+          </button>
 
           <button
             onClick={toggleFullscreen}
@@ -269,7 +285,10 @@ export const PresenterPage: React.FC = () => {
                 )}
               </div>
 
-              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-relaxed text-center max-w-4xl">
+              <h1
+                style={{ fontSize: `${Math.round(questionFontSize * 1.15)}px`, lineHeight: 1.25 }}
+                className="font-black text-white tracking-tight leading-relaxed text-center max-w-4xl"
+              >
                 {activeQuestion.title}
               </h1>
             </div>
@@ -288,7 +307,10 @@ export const PresenterPage: React.FC = () => {
                   </span>
                 )}
               </div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-snug">
+              <h1
+                style={{ fontSize: `${questionFontSize}px`, lineHeight: 1.25 }}
+                className="font-black text-white tracking-tight leading-snug"
+              >
                 {activeQuestion.title}
               </h1>
             </div>
@@ -307,8 +329,19 @@ export const PresenterPage: React.FC = () => {
 
       {/* Subtle Stage Bar */}
       <footer className="px-6 py-3 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-900">
-        <span>Nhấn <kbd className="px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">F</kbd> Toàn màn hình</span>
+        <div className="flex items-center gap-3">
+          <span>Nhấn <kbd className="px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">F</kbd> Toàn màn hình</span>
+          <span>&bull;</span>
+          <span>Nhấn <kbd className="px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">S</kbd> Cài đặt hiển thị</span>
+        </div>
       </footer>
+
+      {/* Display Settings Modal */}
+      <SettingsModal
+        isOpen={settingsModalOpen}
+        onClose={() => setSettingsModalOpen(false)}
+        targetMode="stage"
+      />
     </div>
   );
 };
