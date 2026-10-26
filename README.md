@@ -1,14 +1,14 @@
-# PulsePoll ⚡ — Real-Time Live ABCD Audience Polling
+# HiepPhuPoll ⚡ — Real-Time Live ABCD Audience Polling
 
-PulsePoll is a production-quality, real-time multiple-choice (ABCD) audience polling web application inspired by live presentation stage tools like Mentimeter. It is engineered specifically for live presentations, workshops, youth group activities, Bible study games, and small conferences (targeted for 30–100 concurrent participants).
+HiepPhuPoll is a production-quality, real-time multiple-choice (ABCD) audience polling web application inspired by live presentation stage tools like Mentimeter. It is engineered specifically for live presentations, workshops, youth group activities, Bible study games, and small conferences (targeted for 30–100 concurrent participants).
 
 ---
 
 ## 1. Product Vision & Architecture
 
-PulsePoll provides zero-friction live polling:
+HiepPhuPoll provides zero-friction live polling:
 - **Zero Participant Accounts / Zero Names**: Attendees simply scan the QR code with their mobile phone cameras to vote immediately.
-- **No Database / Zero Backend Servers**: PulsePoll relies on **Supabase Realtime Broadcast** solely as an external publish/subscribe network transport.
+- **No Database / Zero Backend Servers**: HiepPhuPoll relies on **Supabase Realtime Broadcast** solely as an external publish/subscribe network transport.
 - **In-Memory Host Authority**: The active session state (questions, active question index, voting status, and current participant votes) resides strictly in the authoritative presenter/host client memory.
 - **No Browser Storage**: In adherence to security and privacy guidelines, no questions, votes, or room state are saved to `localStorage`, `sessionStorage`, `IndexedDB`, or cookies.
 
@@ -92,14 +92,14 @@ VITE_PUBLIC_APP_URL=http://localhost:5173
 
 > [!NOTE]
 > **Offline / Local Multi-Window Testing Mode**:
-> If `VITE_SUPABASE_URL` or `VITE_SUPABASE_PUBLISHABLE_KEY` is not provided, PulsePoll automatically activates an in-memory cross-tab/multi-window BroadcastChannel transport. This allows complete end-to-end testing between browser windows on the same machine without setting up Supabase.
+> If `VITE_SUPABASE_URL` or `VITE_SUPABASE_PUBLISHABLE_KEY` is not provided, HiepPhuPoll automatically activates an in-memory cross-tab/multi-window BroadcastChannel transport. This allows complete end-to-end testing between browser windows on the same machine without setting up Supabase.
 
 ### 3. Supabase Dashboard Setup (for Live Multi-Device Stage Broadcast)
 To enable real-time broadcast across different devices on the internet:
 1. Create a project at [supabase.com](https://supabase.com).
 2. Go to **Project Settings** > **API**. Copy the **Project URL** and the **`anon` public key** (or new publishable key) into your `.env`.
 3. In the Supabase Dashboard, navigate to **Realtime** > **Inspect & Configure**.
-4. Ensure **Broadcast** is enabled for your project. No database tables or migrations are needed since PulsePoll does not use a database.
+4. Ensure **Broadcast** is enabled for your project. No database tables or migrations are needed since HiepPhuPoll does not use a database.
 
 ---
 
@@ -158,7 +158,7 @@ All events transmitted over topic `poll:<roomId>` adhere to protocol version `1.
 
 ### Public Broadcast Security Considerations
 - In a client-side broadcast architecture without an authenticated backend, malicious users on the same channel could theoretically forge broadcast events.
-- PulsePoll mitigates this in the frontend by:
+- HiepPhuPoll mitigates this in the frontend by:
   1. Restricting host state mutations to local controls.
   2. Rejecting any votes matching inactive questions, closed polls, or invalid options (`A`, `B`, `C`, `D`).
   3. Deduplicating event IDs using an LRU cache.
@@ -169,7 +169,7 @@ All events transmitted over topic `poll:<roomId>` adhere to protocol version `1.
 
 ## 8. Manual Load-Testing Guide (30–100 Participants)
 
-To test PulsePoll under realistic event conditions (30 to 100 participants):
+To test HiepPhuPoll under realistic event conditions (30 to 100 participants):
 
 ### Automated Virtual Audience Script
 Create a simple load-test runner in `scripts/loadTest.ts` or run the following loop in the browser developer console:

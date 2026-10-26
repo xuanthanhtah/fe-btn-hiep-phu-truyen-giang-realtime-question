@@ -112,7 +112,7 @@ export const PollResultsView: React.FC<PollResultsViewProps> = ({
             <div
               key={option.id}
               className={`relative overflow-hidden rounded-2xl border transition-all duration-300 shadow-lg ${theme.cardBg} ${theme.border} ${theme.glow} ${
-                isStage ? 'p-5 sm:p-6 min-h-[110px]' : 'p-4'
+                isStage ? 'p-5 sm:p-7 min-h-[120px]' : 'p-4'
               }`}
             >
               {/* Animated Progress Bar fill */}
@@ -123,18 +123,22 @@ export const PollResultsView: React.FC<PollResultsViewProps> = ({
 
               {/* Foreground Content */}
               <div className="relative z-10 flex flex-col justify-between h-full">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-4 mb-3">
+                  <div className="flex items-start gap-3.5 sm:gap-4 flex-1 min-w-0">
                     <span
-                      className={`inline-flex items-center justify-center font-black rounded-xl shadow-md shrink-0 ${
-                        isStage ? 'w-10 h-10 sm:w-11 sm:h-11 text-xl' : 'w-8 h-8 text-base'
+                      className={`inline-flex items-center justify-center font-black shadow-md shrink-0 ${
+                        isStage
+                          ? 'w-11 h-11 sm:w-13 sm:h-13 text-xl sm:text-2xl rounded-2xl'
+                          : 'w-8 h-8 text-base rounded-xl'
                       } ${theme.badgeBg}`}
                     >
                       {option.id}
                     </span>
                     <span
-                      className={`font-semibold text-white tracking-wide leading-snug break-words ${
-                        isStage ? 'text-lg sm:text-xl' : 'text-sm sm:text-base'
+                      className={`text-white tracking-wide leading-snug break-words ${
+                        isStage
+                          ? 'text-xl sm:text-2xl lg:text-3xl font-bold'
+                          : 'text-sm sm:text-base font-semibold'
                       }`}
                     >
                       {option.text}
@@ -145,12 +149,12 @@ export const PollResultsView: React.FC<PollResultsViewProps> = ({
                   <div className="text-right flex flex-col items-end shrink-0 pl-2">
                     <span
                       className={`font-black font-mono tracking-tight ${theme.textAccent} ${
-                        isStage ? 'text-2xl sm:text-3xl' : 'text-lg'
+                        isStage ? 'text-3xl sm:text-4xl' : 'text-lg'
                       }`}
                     >
                       {percentage}%
                     </span>
-                    <span className="text-xs text-slate-400 font-mono">
+                    <span className={`font-mono text-slate-400 ${isStage ? 'text-xs sm:text-sm font-semibold' : 'text-xs'}`}>
                       {count} phiếu
                     </span>
                   </div>

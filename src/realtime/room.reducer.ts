@@ -57,11 +57,13 @@ export function calculateVotePercentages(counts: VoteCounts): VotePercentages {
  */
 export function derivePublicRoomState(state: HostRoomState): PublicRoomState {
   const counts = calculateVoteCounts(state.votes);
-  const currentQuestion = state.questions[state.currentQuestionIndex] ?? null;
+  const isStarted = state.isStarted !== false; // defaults to true if omitted in mock states
+  const currentQuestion = isStarted ? (state.questions[state.currentQuestionIndex] ?? null) : null;
 
   return {
     roomId: state.roomId,
     revision: state.revision,
+    isStarted: state.isStarted,
     currentQuestionIndex: state.currentQuestionIndex,
     totalQuestions: state.questions.length,
     currentQuestion,

@@ -34,7 +34,7 @@ export const LandingPage: React.FC = () => {
           <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/30">
             <Zap className="w-4 h-4 fill-current" />
           </div>
-          <span className="text-lg font-black tracking-tight text-white">PulsePoll</span>
+          <span className="text-lg font-black tracking-tight text-white">HiepPhuPoll</span>
         </div>
 
         <ConnectionBadge showDetails={false} />
@@ -104,7 +104,7 @@ export const LandingPage: React.FC = () => {
 
       {/* Minimal Footer */}
       <footer className="py-4 text-center text-xs text-slate-600 border-t border-slate-900">
-        PulsePoll &bull; Nền tảng bình chọn sân khấu tương tác
+        HiepPhuPoll &bull; Nền tảng bình chọn sân khấu tương tác
       </footer>
     </div>
   );

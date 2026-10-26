@@ -25,6 +25,7 @@ interface PresenterStore extends PublicRoomState {
 export const usePresenterStore = create<PresenterStore>((set, get) => ({
   roomId: '',
   revision: 0,
+  isStarted: false,
   currentQuestionIndex: 0,
   totalQuestions: 0,
   currentQuestion: null,
@@ -38,12 +39,14 @@ export const usePresenterStore = create<PresenterStore>((set, get) => ({
     if (snapshot.revision < current.revision && snapshot.roomId === current.roomId) {
       return;
     }
+    const isStarted = snapshot.isStarted !== undefined ? snapshot.isStarted : Boolean(snapshot.currentQuestion);
     set({
       roomId: snapshot.roomId,
       revision: snapshot.revision,
+      isStarted,
       currentQuestionIndex: snapshot.currentQuestionIndex,
       totalQuestions: snapshot.totalQuestions,
-      currentQuestion: snapshot.currentQuestion,
+      currentQuestion: isStarted ? snapshot.currentQuestion : null,
       pollStatus: snapshot.pollStatus,
       voteCounts: snapshot.voteCounts,
       totalAcceptedVotes: snapshot.totalAcceptedVotes,
@@ -91,6 +94,7 @@ export const usePresenterStore = create<PresenterStore>((set, get) => ({
       currentQuestionIndex: questionIndex,
       totalQuestions,
       currentQuestion,
+      isStarted: Boolean(currentQuestion),
       pollStatus: hasOptions ? 'open' : 'waiting',
       voteCounts: INITIAL_VOTE_COUNTS,
       totalAcceptedVotes: 0,
@@ -113,6 +117,7 @@ export const usePresenterStore = create<PresenterStore>((set, get) => ({
     set({
       roomId,
       revision: 0,
+      isStarted: false,
       currentQuestionIndex: 0,
       totalQuestions: 0,
       currentQuestion: null,

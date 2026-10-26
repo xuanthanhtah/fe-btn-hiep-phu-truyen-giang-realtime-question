@@ -98,7 +98,7 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(questions, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `pulse_poll_questions_${Date.now()}.json`);
+    downloadAnchor.setAttribute('download', `hiep_phu_poll_questions_${Date.now()}.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();

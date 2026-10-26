@@ -26,7 +26,7 @@ describe('Page Rendering & User Flow Tests', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getAllByText(/PulsePoll/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/HiepPhuPoll/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Tạo phòng bình chọn/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/Nhập mã phòng/i)).toBeInTheDocument();
   });
@@ -42,6 +42,13 @@ describe('Page Rendering & User Flow Tests', () => {
 
     expect(screen.getByText(/Host Controller/i)).toBeInTheDocument();
     expect(screen.getAllByText('ROOM99').length).toBeGreaterThan(0);
+
+    // Initial state shows Start button
+    const startBtns = screen.getAllByRole('button', { name: /Bắt đầu/i });
+    expect(startBtns.length).toBeGreaterThan(0);
+    fireEvent.click(startBtns[0]);
+
+    // Once started, voting controls become active
     expect(screen.getByRole('button', { name: /Khóa bình chọn/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Reset câu này/i })).toBeInTheDocument();
 
@@ -170,5 +177,47 @@ describe('Page Rendering & User Flow Tests', () => {
     expect(screen.getByText('Lắng nghe')).toBeInTheDocument();
     // Verify no ABCD option buttons exist
     expect(screen.queryByText('A')).not.toBeInTheDocument();
+  });
+
+  it('displays Stage QR Lobby on PresenterPage until Host starts session', () => {
+    useHostStore.getState().initRoom('ROOM_STAGE');
+    usePresenterStore.getState().resetState('ROOM_STAGE');
+
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/present/ROOM_STAGE']}>
+        <Routes>
+          <Route path="/present/:roomId" element={<PresenterPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    // Initial snapshot broadcasted when not started yet
+    const snapshotNotStarted = useHostStore.getState().getPublicSnapshot();
+    expect(snapshotNotStarted.currentQuestion).toBeNull();
+    act(() => {
+      usePresenterStore.getState().applySnapshot(snapshotNotStarted);
+    });
+
+    // Verify Stage QR Lobby is visible
+    expect(screen.getByText(/Quét mã QR để tham gia bình chọn/i)).toBeInTheDocument();
+    expect(screen.getByText(/Đang đón khán giả tham gia/i)).toBeInTheDocument();
+
+    // Host clicks startSession
+    act(() => {
+      useHostStore.getState().startSession();
+    });
+    const snapshotStarted = useHostStore.getState().getPublicSnapshot();
+    expect(snapshotStarted.currentQuestion).not.toBeNull();
+
+    act(() => {
+      usePresenterStore.getState().applySnapshot(snapshotStarted);
+    });
+
+    // Verify Question 1 is now displayed
+    const q1 = useHostStore.getState().questions[0];
+    expect(screen.getByText(q1.title)).toBeInTheDocument();
+    expect(screen.queryByText(/Đang đón khán giả tham gia/i)).not.toBeInTheDocument();
+
+    unmount();
   });
 });

@@ -39,6 +39,7 @@ export const RoomStateEventSchema = BaseEventSchema.extend({
   type: z.literal('room:state'),
   payload: z.object({
     revision: z.number().int().nonnegative(),
+    isStarted: z.boolean().optional(),
     currentQuestionIndex: z.number().int().nonnegative(),
     totalQuestions: z.number().int().nonnegative(),
     currentQuestion: PollQuestionSchema.nullable(),

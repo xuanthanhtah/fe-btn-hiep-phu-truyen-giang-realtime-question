@@ -53,51 +53,57 @@ export const RoomQrCard: React.FC<RoomQrCardProps> = ({
 
     const modal = (
       <div
-        className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-in fade-in duration-200"
+        className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-in fade-in duration-200"
         onClick={() => setIsZoomed(false)}
       >
         <div
-          className="relative w-full max-w-sm sm:max-w-md bg-slate-900 border border-slate-700/80 rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col items-center text-center my-auto animate-in zoom-in-95 duration-200"
+          className="relative w-full max-w-md sm:max-w-xl bg-slate-900 border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col items-center text-center my-auto animate-in zoom-in-95 duration-200"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close button */}
           <button
             onClick={() => setIsZoomed(false)}
-            className="absolute top-3.5 right-3.5 p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
+            className="absolute top-4 right-4 p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
             title="Đóng (Esc)"
           >
             <X className="w-5 h-5" />
           </button>
 
           {/* Header */}
-          <div className="flex items-center gap-2 mb-1 text-indigo-400">
+          <div className="flex items-center gap-2 mb-1.5 text-indigo-400">
             <QrCode className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest">Quét mã tham gia</span>
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-widest">Quét mã tham gia</span>
           </div>
-          <p className="text-xs text-slate-400 mb-4">
-            Dùng camera điện thoại quét mã QR để vào phòng bình chọn
+          <p className="text-xs sm:text-sm text-slate-400 mb-5 max-w-sm">
+            Dùng camera điện thoại quét mã QR để vào phòng bình chọn trực tiếp
           </p>
 
-          {/* Large High-Res QR code */}
-          <div className="bg-white p-3.5 rounded-2xl shadow-2xl mb-4">
-            <QRCodeSVG value={joinUrl} size={240} level="H" includeMargin={true} />
+          {/* Large High-Res QR code - increased size */}
+          <div className="bg-white p-4 sm:p-5 rounded-3xl shadow-2xl mb-5 ring-4 ring-indigo-500/20 flex items-center justify-center">
+            <QRCodeSVG
+              value={joinUrl}
+              size={320}
+              level="H"
+              includeMargin={true}
+              className="max-w-[80vw] max-h-[50vh] w-auto h-auto"
+            />
           </div>
 
           {/* Room Code */}
-          <div className="w-full mb-4">
-            <div className="text-[11px] uppercase tracking-wider text-slate-400 mb-1 font-semibold">
+          <div className="w-full mb-5">
+            <div className="text-xs uppercase tracking-wider text-slate-400 mb-1.5 font-bold">
               Mã phòng tham gia
             </div>
-            <div className="text-3xl font-black text-white font-mono tracking-widest bg-slate-950/80 py-2 px-5 rounded-2xl border border-slate-800">
+            <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-widest bg-slate-950/80 py-2.5 px-6 rounded-2xl border border-slate-800 shadow-inner">
               {roomId}
             </div>
           </div>
 
           {/* Action buttons */}
-          <div className="w-full flex items-center gap-2.5">
+          <div className="w-full flex items-center gap-3">
             <button
               onClick={handleCopy}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-xs font-bold text-white transition shadow-lg shadow-indigo-600/30 cursor-pointer"
+              className="flex-1 flex items-center justify-center gap-2 py-3 px-5 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-xs sm:text-sm font-bold text-white transition shadow-lg shadow-indigo-600/30 cursor-pointer"
             >
               {copied ? (
                 <>
@@ -107,7 +113,7 @@ export const RoomQrCard: React.FC<RoomQrCardProps> = ({
               ) : (
                 <>
                   <Copy className="w-4 h-4" />
-                  <span>Sao chép link</span>
+                  <span>Sao chép link tham gia</span>
                 </>
               )}
             </button>
@@ -116,10 +122,10 @@ export const RoomQrCard: React.FC<RoomQrCardProps> = ({
               href={joinUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-300 hover:text-white transition cursor-pointer"
+              className="p-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl text-slate-300 hover:text-white transition cursor-pointer"
               title="Mở màn hình người chơi trong tab mới"
             >
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-5 h-5" />
             </a>
           </div>
         </div>

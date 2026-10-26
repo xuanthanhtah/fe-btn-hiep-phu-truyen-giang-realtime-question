@@ -28,6 +28,7 @@ import {
   Sliders,
   AlertTriangle,
   Zap,
+  QrCode,
 } from 'lucide-react';
 
 export const HostPage: React.FC = () => {
@@ -39,8 +40,11 @@ export const HostPage: React.FC = () => {
   const questions = useHostStore((s) => s.questions);
   const currentQuestionIndex = useHostStore((s) => s.currentQuestionIndex);
   const pollStatus = useHostStore((s) => s.pollStatus);
+  const isStarted = useHostStore((s) => s.isStarted);
 
   const initRoom = useHostStore((s) => s.initRoom);
+  const startSession = useHostStore((s) => s.startSession);
+  const showQrLobby = useHostStore((s) => s.showQrLobby);
   const openPoll = useHostStore((s) => s.openPoll);
   const closePoll = useHostStore((s) => s.closePoll);
   const goToQuestion = useHostStore((s) => s.goToQuestion);
@@ -146,7 +150,8 @@ export const HostPage: React.FC = () => {
     return () => {
       clearTimeout(timer);
       clearInterval(heartbeatTimer);
-      if (syncDebounceRef.current) clearTimeout(syncDebounceRef.current);
+      const debounceTimer = syncDebounceRef.current;
+      if (debounceTimer) clearTimeout(debounceTimer);
       sub.unsubscribe();
       channelSubRef.current = null;
     };
@@ -163,6 +168,18 @@ export const HostPage: React.FC = () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
+
+  const handleStartSession = async () => {
+    if (connectionStatus === 'disconnected' || connectionStatus === 'unavailable') return;
+    startSession();
+    await broadcastCurrentState();
+  };
+
+  const handleShowQrLobby = async () => {
+    if (connectionStatus === 'disconnected' || connectionStatus === 'unavailable') return;
+    showQrLobby();
+    await broadcastCurrentState();
+  };
 
   const handleOpenPoll = async () => {
     if (connectionStatus === 'disconnected' || connectionStatus === 'unavailable') return;
@@ -263,6 +280,36 @@ export const HostPage: React.FC = () => {
           </div>
         )}
 
+        {/* Banner when in QR Lobby mode */}
+        {!isStarted && (
+          <div className="bg-gradient-to-r from-indigo-950/70 via-slate-900/90 to-slate-900/70 border border-indigo-500/40 rounded-3xl p-5 sm:p-6 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4 text-center sm:text-left">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
+                <QrCode className="w-6 h-6 animate-pulse" />
+              </div>
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold mb-1">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                  <span>Sân khấu đang hiện mã QR</span>
+                </div>
+                <h2 className="text-base sm:text-lg font-bold text-white">Chờ khán giả quét mã tham gia</h2>
+                <p className="text-xs text-slate-400">
+                  Màn hình Presenter Stage đang hiển thị mã QR lớn. Bấm <b>"Bắt đầu"</b> khi muốn hiển thị câu hỏi.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleStartSession}
+              disabled={isControlsDisabled}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-black text-base transition shadow-xl shadow-emerald-600/30 cursor-pointer shrink-0"
+            >
+              <Play className="w-5 h-5 fill-current" />
+              <span>Bắt đầu</span>
+            </button>
+          </div>
+        )}
+
         {/* Live Question Action Bar */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col gap-5">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -308,7 +355,16 @@ export const HostPage: React.FC = () => {
 
           {/* Core Actions: Open/Close Poll, Reset, Toggle Deck Editor */}
           <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-slate-800/80">
-            {(!activeQuestion?.options || activeQuestion.options.length === 0) ? (
+            {!isStarted ? (
+              <button
+                disabled={isControlsDisabled}
+                onClick={handleStartSession}
+                className="flex-1 min-h-[46px] flex items-center justify-center gap-2 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-bold text-sm transition shadow-lg shadow-emerald-600/30 cursor-pointer active:scale-[0.99]"
+              >
+                <Play className="w-4 h-4 fill-current" />
+                <span>Bắt đầu</span>
+              </button>
+            ) : (!activeQuestion?.options || activeQuestion.options.length === 0) ? (
               <div className="flex-1 min-h-[46px] flex items-center justify-center px-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-slate-400 text-xs font-semibold">
                 Câu hỏi mở • Không cần mở bình chọn (Hiển thị chính giữa màn hình)
               </div>
@@ -329,6 +385,18 @@ export const HostPage: React.FC = () => {
               >
                 <Square className="w-4 h-4 fill-current" />
                 <span>Khóa bình chọn</span>
+              </button>
+            )}
+
+            {isStarted && (
+              <button
+                disabled={isControlsDisabled}
+                onClick={handleShowQrLobby}
+                className="flex items-center gap-1.5 px-4 min-h-[46px] rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700 transition cursor-pointer"
+                title="Tạm dừng hiển thị câu hỏi và chiếu lại mã QR cho khán giả vào thêm"
+              >
+                <QrCode className="w-4 h-4 text-indigo-400" />
+                <span>Hiện QR sân khấu</span>
               </button>
             )}
 
@@ -410,7 +478,7 @@ export const HostPage: React.FC = () => {
 
       {/* Minimal Footer */}
       <footer className="py-3 text-center text-xs text-slate-600 border-t border-slate-900">
-        PulsePoll &bull; In-Memory Host Session
+        HiepPhuPoll &bull; In-Memory Host Session
       </footer>
 
       {/* Reset Confirmation Modal */}

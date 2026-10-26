@@ -39,6 +39,7 @@ function createMockHostState(overrides?: Partial<HostRoomState>): HostRoomState 
   return {
     roomId: 'TEST01',
     hostSessionId: 'sess-123',
+    isStarted: true,
     currentQuestionIndex: 0,
     questions: mockQuestions,
     pollStatus: 'open',

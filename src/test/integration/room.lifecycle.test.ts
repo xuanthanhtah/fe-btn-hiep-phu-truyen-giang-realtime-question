@@ -16,11 +16,14 @@ describe('Room Lifecycle & Realtime Synchronization Integration Flow', () => {
   });
 
   it('orchestrates host creation, snapshot sync, voting, closing, and rejection', () => {
-    // 1. Host creates room and has initial questions
+    // 1. Host creates room and starts presentation session
     const host = useHostStore.getState();
     expect(host.roomId).toBe('ROOM_INTEG');
     expect(host.questions.length).toBeGreaterThan(0);
     const activeQuestion = host.questions[0];
+
+    // Host starts session so questions are broadcast
+    host.startSession();
 
     // 2. Host broadcasts initial room snapshot (voting is open by default for questions with options)
     const initialSnapshot = host.getPublicSnapshot();

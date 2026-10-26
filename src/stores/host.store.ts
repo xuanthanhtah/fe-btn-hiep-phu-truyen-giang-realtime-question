@@ -41,6 +41,8 @@ const DEFAULT_QUESTIONS: PollQuestion[] = TRUYEN_GIANG_PRESET;
 
 interface HostStore extends HostRoomState {
   initRoom: (roomId?: string) => string;
+  startSession: () => void;
+  showQrLobby: () => void;
   openPoll: () => void;
   closePoll: () => void;
   goToQuestion: (index: number) => void;
@@ -64,6 +66,7 @@ interface HostStore extends HostRoomState {
 export const useHostStore = create<HostStore>((set, get) => ({
   roomId: '',
   hostSessionId: '',
+  isStarted: false,
   currentQuestionIndex: 0,
   questions: DEFAULT_QUESTIONS,
   pollStatus: 'open',
@@ -84,6 +87,7 @@ export const useHostStore = create<HostStore>((set, get) => ({
     set({
       roomId,
       hostSessionId,
+      isStarted: false,
       currentQuestionIndex: 0,
       questions: DEFAULT_QUESTIONS,
       pollStatus: hasOptions ? 'open' : 'waiting',
@@ -92,6 +96,26 @@ export const useHostStore = create<HostStore>((set, get) => ({
     });
 
     return roomId;
+  },
+
+  startSession: () => {
+    const { questions, currentQuestionIndex } = get();
+    const currentQ = questions[currentQuestionIndex];
+    const hasOptions = Boolean(currentQ?.options && currentQ.options.length > 0);
+    set((state) => ({
+      ...state,
+      isStarted: true,
+      pollStatus: hasOptions ? 'open' : 'waiting',
+      revision: state.revision + 1,
+    }));
+  },
+
+  showQrLobby: () => {
+    set((state) => ({
+      ...state,
+      isStarted: false,
+      revision: state.revision + 1,
+    }));
   },
 
   openPoll: () => {

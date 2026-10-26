@@ -6,6 +6,8 @@ import { subscribeToRoomChannel, type RoomChannelSubscription } from '../realtim
 import { createRoomSyncRequestEvent, createRoomStateEvent } from '../realtime/room.events';
 import { PollResultsView } from '../components/PollResultsView';
 import { RoomQrCard } from '../components/RoomQrCard';
+import { QRCodeSVG } from 'qrcode.react';
+import { getAppConfig } from '../realtime/supabase.client';
 import {
   Maximize,
   Minimize,
@@ -18,6 +20,7 @@ export const PresenterPage: React.FC = () => {
   const navigate = useNavigate();
 
   // Fine-grained selectors
+  const isStarted = usePresenterStore((s) => s.isStarted);
   const activeQuestion = usePresenterStore((s) => s.currentQuestion);
   const currentQuestionIndex = usePresenterStore((s) => s.currentQuestionIndex);
   const totalQuestions = usePresenterStore((s) => s.totalQuestions);
@@ -171,6 +174,10 @@ export const PresenterPage: React.FC = () => {
     };
   }, [roomId, navigate, resetState, applySnapshot, applyVoteAccepted, applyPollOpened, applyPollClosed, applyQuestionChanged, applyRoomReset, setConnectionStatus, setTransportType]);
 
+  const config = getAppConfig();
+  const baseUrl = config.publicAppUrl.replace(/\/+$/, '');
+  const joinUrl = `${baseUrl}/join/${roomId || ''}`;
+
   return (
     <div
       ref={containerRef}
@@ -205,14 +212,48 @@ export const PresenterPage: React.FC = () => {
 
       {/* Main Stage Canvas */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-8 flex flex-col justify-center">
-        {!activeQuestion ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <Radio className="w-12 h-12 text-indigo-400 mb-4 animate-pulse" />
-            <h2 className="text-3xl font-black text-white mb-2">Sẵn sàng trình chiếu</h2>
-            <p className="text-sm text-slate-400 max-w-sm mb-6">
-              Quét mã QR trên màn hình bằng điện thoại để tham gia bình chọn trực tiếp.
+        {!isStarted || !activeQuestion ? (
+          <div className="flex flex-col items-center justify-center py-6 text-center animate-in fade-in duration-300">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 text-xs sm:text-sm font-bold uppercase tracking-widest mb-4">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Đang đón khán giả tham gia</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight mb-3">
+              Quét mã QR để tham gia bình chọn
+            </h1>
+            <p className="text-sm sm:text-base text-slate-400 max-w-lg mb-6">
+              Mở camera điện thoại quét mã QR hoặc truy cập đường link để vào phòng.
             </p>
-            <RoomQrCard roomId={roomId || ''} size={220} />
+
+            <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl flex flex-col items-center text-center max-w-sm sm:max-w-md w-full">
+              <div className="bg-white p-4 sm:p-5 rounded-3xl shadow-2xl ring-4 ring-indigo-500/20 mb-5">
+                <QRCodeSVG
+                  value={joinUrl}
+                  size={280}
+                  level="H"
+                  includeMargin={true}
+                  className="max-w-[70vw] w-auto h-auto"
+                />
+              </div>
+
+              <div className="w-full">
+                <div className="text-xs uppercase tracking-widest text-slate-400 mb-1 font-bold">
+                  Mã phòng
+                </div>
+                <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-widest bg-slate-950 py-2 px-6 rounded-2xl border border-slate-800 shadow-inner mb-2">
+                  {roomId}
+                </div>
+                <div className="text-xs text-indigo-300/80 font-mono break-all">
+                  {joinUrl}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center gap-2 text-xs text-slate-500">
+              <Radio className="w-4 h-4 text-indigo-400 animate-pulse" />
+              <span>Màn hình sẽ tự động hiển thị câu hỏi khi người điều phối bấm bắt đầu</span>
+            </div>
           </div>
         ) : !activeQuestion.options || activeQuestion.options.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center max-w-5xl w-full mx-auto py-12 px-4">
@@ -266,7 +307,6 @@ export const PresenterPage: React.FC = () => {
 
       {/* Subtle Stage Bar */}
       <footer className="px-6 py-3 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-900">
-        <span>Sự kiện Truyền Giảng • Trực tiếp tương tác</span>
         <span>Nhấn <kbd className="px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">F</kbd> Toàn màn hình</span>
       </footer>
     </div>

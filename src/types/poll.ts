@@ -27,6 +27,7 @@ export type VotePercentages = Record<OptionId, number>;
 export interface HostRoomState {
   roomId: string;
   hostSessionId: string;
+  isStarted: boolean; // whether host has clicked Start to show questions
   currentQuestionIndex: number;
   questions: PollQuestion[];
   pollStatus: PollStatus;
@@ -37,6 +38,7 @@ export interface HostRoomState {
 export interface PublicRoomState {
   roomId: string;
   revision: number;
+  isStarted?: boolean;
   currentQuestionIndex: number;
   totalQuestions: number;
   currentQuestion: PollQuestion | null;

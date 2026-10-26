@@ -233,9 +233,9 @@ export const ParticipantPage: React.FC = () => {
         {!currentQuestion ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <Radio className="w-10 h-10 text-indigo-400 mb-3 animate-pulse" />
-            <h2 className="text-xl font-bold text-white mb-1">Đã kết nối vào phòng</h2>
+            <h2 className="text-xl font-bold text-white mb-1">Đã vào phòng {roomId}</h2>
             <p className="text-xs text-slate-400 max-w-xs mb-4">
-              Đang chờ người điều phối chuyển sang câu hỏi tiếp theo...
+              Vui lòng quan sát màn hình sân khấu. Câu hỏi bình chọn sẽ xuất hiện ngay khi người điều phối bắt đầu.
             </p>
             <button
               onClick={() => {
