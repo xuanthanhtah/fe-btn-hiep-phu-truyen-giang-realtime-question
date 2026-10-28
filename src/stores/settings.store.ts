@@ -146,3 +146,18 @@ export const useSettingsStore = create<SettingsStore>((set, get) => {
     },
   };
 });
+
+/**
+ * Sync settings across tabs (e.g. Host tab -> Presenter Stage tab) via storage events
+ */
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key !== STORAGE_KEY || !e.newValue) return;
+    try {
+      const parsed = JSON.parse(e.newValue);
+      useSettingsStore.setState({ ...DEFAULT_SETTINGS, ...parsed });
+    } catch (err) {
+      console.warn('Failed to sync settings from another tab', err);
+    }
+  });
+}

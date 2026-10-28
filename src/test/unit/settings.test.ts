@@ -65,4 +65,16 @@ describe('Display Settings Store & Persistence', () => {
     expect(useSettingsStore.getState().questionFontSize).toBe(DEFAULT_SETTINGS.questionFontSize);
     expect(useSettingsStore.getState().answerLayout).toBe(DEFAULT_SETTINGS.answerLayout);
   });
+
+  it('syncs settings changed in another tab via storage event', () => {
+    const otherTabSettings = { ...DEFAULT_SETTINGS, questionFontSize: 50, answerLayout: 'stack-1' };
+    window.dispatchEvent(
+      new StorageEvent('storage', {
+        key: 'hiepphu_display_settings',
+        newValue: JSON.stringify(otherTabSettings),
+      })
+    );
+    expect(useSettingsStore.getState().questionFontSize).toBe(50);
+    expect(useSettingsStore.getState().answerLayout).toBe('stack-1');
+  });
 });

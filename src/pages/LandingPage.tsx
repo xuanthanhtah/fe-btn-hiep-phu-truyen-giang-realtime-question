@@ -97,7 +97,7 @@ export const LandingPage: React.FC = () => {
           {error && <p className="text-rose-400 text-xs font-semibold mt-3">{error}</p>}
 
           <div className="mt-8 pt-6 border-t border-slate-800/60 text-xs text-slate-500">
-            Không cần tài khoản &bull; Bộ 10 câu hỏi Truyền Giảng 31/10 nạp sẵn
+            Không cần tài khoản &bull; Bộ 9 câu hỏi Truyền Giảng 31/10 nạp sẵn
           </div>
         </div>
       </main>

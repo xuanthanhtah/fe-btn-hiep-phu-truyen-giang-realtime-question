@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -262,5 +262,43 @@ describe('Page Rendering & User Flow Tests', () => {
     expect(screen.queryByText(/Điều chỉnh vị trí đáp án/i)).not.toBeInTheDocument();
 
     unmount();
+  });
+
+  it('auto-loops the grouped critical-thinking questions every 3 seconds from the Questions Manager', () => {
+    vi.useFakeTimers();
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/host/LOOP01']}>
+        <Routes>
+          <Route path="/host/:roomId" element={<HostPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getAllByRole('button', { name: /Bắt đầu/i })[0]);
+    fireEvent.click(screen.getByRole('button', { name: /Danh sách câu hỏi/i }));
+
+    const loopSwitch = screen.getByRole('switch');
+    expect(loopSwitch).toHaveAttribute('aria-checked', 'false');
+
+    // Turning on jumps straight into the loop group (Câu 3)
+    fireEvent.click(loopSwitch);
+    expect(useHostStore.getState().questions[useHostStore.getState().currentQuestionIndex].id).toBe('q3');
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(useHostStore.getState().questions[useHostStore.getState().currentQuestionIndex].id).toBe('q4');
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    // Wraps back to the first question of the group
+    expect(useHostStore.getState().questions[useHostStore.getState().currentQuestionIndex].id).toBe('q3');
+
+    unmount();
+    vi.useRealTimers();
   });
 });

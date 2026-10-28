@@ -20,6 +20,7 @@ import { ResetModal } from '../components/ResetModal';
 import { SettingsModal } from '../components/SettingsModal';
 import { ReorderOptionsModal } from '../components/ReorderOptionsModal';
 import { useSettingsStore } from '../stores/settings.store';
+import { AUTO_LOOP_QUESTION_IDS } from '../data/questionPresets';
 import type { OptionId, PollQuestion } from '../types/poll';
 import {
   Play,
@@ -74,6 +75,7 @@ export const HostPage: React.FC = () => {
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [reorderModalOpen, setReorderModalOpen] = useState(false);
+  const [isAutoLoopOn, setIsAutoLoopOn] = useState(false);
 
   const hostQuestionFontSize = useSettingsStore((s) => s.hostQuestionFontSize);
 
@@ -260,6 +262,49 @@ export const HostPage: React.FC = () => {
     }));
     handleUpdateActiveQuestion({ ...currentQ, options: updatedOptions });
   };
+
+  const getAutoLoopIndices = () =>
+    questions
+      .map((q, idx) => (AUTO_LOOP_QUESTION_IDS.includes(q.id) ? idx : -1))
+      .filter((idx) => idx !== -1);
+
+  const handleToggleAutoLoop = () => {
+    if (isAutoLoopOn) {
+      setIsAutoLoopOn(false);
+      return;
+    }
+    const loopIndices = getAutoLoopIndices();
+    if (loopIndices.length === 0) return;
+    setIsAutoLoopOn(true);
+    // Jump into the loop group right away if the live question is outside it
+    if (!loopIndices.includes(currentQuestionIndex)) {
+      handleGoToQuestion(loopIndices[0]);
+    }
+  };
+
+  const handleSelectQuestion = (index: number) => {
+    // Manually picking a question outside the loop group stops the auto-loop
+    if (isAutoLoopOn && !getAutoLoopIndices().includes(index)) {
+      setIsAutoLoopOn(false);
+    }
+    handleGoToQuestion(index);
+  };
+
+  // Auto-loop: advance to the next question in the loop group every 3 seconds
+  useEffect(() => {
+    if (!isAutoLoopOn || !isStarted) return;
+    const timer = setTimeout(() => {
+      const loopIndices = getAutoLoopIndices();
+      if (loopIndices.length === 0) {
+        setIsAutoLoopOn(false);
+        return;
+      }
+      const position = loopIndices.indexOf(currentQuestionIndex);
+      const nextIndex = loopIndices[(position + 1) % loopIndices.length];
+      handleGoToQuestion(nextIndex);
+    }, 3000);
+    return () => clearTimeout(timer);
+  });
 
   const activeQuestion = questions[currentQuestionIndex] ?? null;
   const snapshot = useHostStore.getState().getPublicSnapshot();
@@ -472,7 +517,7 @@ export const HostPage: React.FC = () => {
           <QuestionEditor
             questions={questions}
             currentQuestionIndex={currentQuestionIndex}
-            onSelectQuestion={(idx) => handleGoToQuestion(idx)}
+            onSelectQuestion={(idx) => handleSelectQuestion(idx)}
             onAddQuestion={(q) => addQuestion(q)}
             onUpdateQuestion={(idx, q) => updateQuestion(idx, q)}
             onDeleteQuestion={(idx) => deleteQuestion(idx)}
@@ -482,6 +527,8 @@ export const HostPage: React.FC = () => {
               if (ok) broadcastCurrentState();
               return ok;
             }}
+            isAutoLoopOn={isAutoLoopOn}
+            onToggleAutoLoop={handleToggleAutoLoop}
           />
         )}
 
