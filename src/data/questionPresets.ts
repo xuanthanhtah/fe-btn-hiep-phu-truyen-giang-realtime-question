@@ -32,7 +32,7 @@ export const TRUYEN_GIANG_PRESET: PollQuestion[] = [
   {
     id: "q3",
     title:
-      'Câu 3 .TÌNH YÊU VÀ CÁC MỐI QUAN HỆ: Đâu sẽ là nền tảng quyết định để hai người đi cùng nhau "sau này": Sự ổn định về tài chính, sự nghiệp hay sự chân thành của tình yêu?',
+      'Câu 3 .TÌNH YÊU VÀ CÁC MỐI QUAN HỆ: Đâu sẽ là nền tảng quyết định để hai người đi cùng nhau "sau này": Sự ổn định về tài chính - sự nghiệp hay sự chân thành của tình yêu?',
     options: [],
   },
   {
